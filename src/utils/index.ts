@@ -1,70 +1,75 @@
-import moment from 'moment-timezone'
-import { Location } from '../index';
-import { Page } from 'puppeteer';
-import countries from 'i18n-iso-countries';
-import cities from 'all-the-cities';
+import moment from "moment-timezone";
+import { Location } from "../index";
+import { Page } from "puppeteer";
+import countries from "i18n-iso-countries";
+import cities from "all-the-cities";
 
 export const getIsCountry = (text: string): boolean => {
-  const countriesList = Object.values(countries.getNames('en'));
+  const countriesList = Object.values(countries.getNames("en"));
   const lowerCaseText = text.toLowerCase();
 
   // Some custom text that we assume is also a country (lower cased)
   // But is not detected correctly by the iso-countries module
-  if (['united states', 'the netherlands'].includes(lowerCaseText)) {
+  if (["united states", "the netherlands"].includes(lowerCaseText)) {
     return true;
   }
 
-  return !!countriesList.find(country => country.toLowerCase() === lowerCaseText);
-}
+  return !!countriesList.find(
+    (country) => country.toLowerCase() === lowerCaseText
+  );
+};
 
 export const getIsCity = (text: string): boolean => {
   const lowerCaseText = text.toLowerCase();
 
-  if (['new york'].includes(lowerCaseText)) {
+  if (["new york"].includes(lowerCaseText)) {
     return true;
   }
 
-  return !!cities.find(city => city.name.toLowerCase() === lowerCaseText)
-}
+  return !!cities.find((city) => city.name.toLowerCase() === lowerCaseText);
+};
 
 export const formatDate = (date: moment.MomentInput | string): string => {
-  if (date === 'Present') {
-    return moment().format()
+  if (date === "Present") {
+    return moment().format();
   }
 
-  return moment(date, 'MMMY').format()
-}
+  return moment(date, "MMMY").format();
+};
 
-export const getDurationInDays = (formattedStartDate: string, formattedEndDate: Date | string): number | null => {
-  if (!formattedStartDate || !formattedEndDate) return null
+export const getDurationInDays = (
+  formattedStartDate: string,
+  formattedEndDate: Date | string
+): number | null => {
+  if (!formattedStartDate || !formattedEndDate) return null;
   // +1 to include the start date
-  return moment(formattedEndDate).diff(moment(formattedStartDate), 'days') + 1
-}
+  return moment(formattedEndDate).diff(moment(formattedStartDate), "days") + 1;
+};
 
 export const getLocationFromText = (text: string): Location | null => {
   // Text is something like: Amsterdam Oud-West, North Holland Province, Netherlands
 
-  if (!text) return null
+  if (!text) return null;
 
-  const cleanText = text.replace(' Area', '').trim();
-  const parts = cleanText.split(', ');
+  const cleanText = text.replace(" Area", "").trim();
+  const parts = cleanText.split(", ");
 
-  let city: null | string = null
-  let province: null | string = null
-  let country: null | string = null
+  let city: null | string = null;
+  let province: null | string = null;
+  let country: null | string = null;
 
   // If there are 3 parts, we can be sure of the order of each part
   // So that must be a: city, province/state and country
   if (parts.length === 3) {
-    city = parts[0]
-    province = parts[1]
-    country = parts[2]
+    city = parts[0];
+    province = parts[1];
+    country = parts[2];
 
     return {
       city,
       province,
-      country
-    }
+      country,
+    };
   }
 
   // If we only have 2 parts, we don't know exactly what each part is;
@@ -79,8 +84,8 @@ export const getLocationFromText = (text: string): Location | null => {
       return {
         city: parts[0],
         province,
-        country: parts[1]
-      }
+        country: parts[1],
+      };
     }
 
     // If the second part is NOT a country, it's probably a province/state
@@ -88,15 +93,15 @@ export const getLocationFromText = (text: string): Location | null => {
       return {
         city: parts[0],
         province: parts[1],
-        country
-      }
+        country,
+      };
     }
 
     return {
       city,
       province: parts[0],
-      country: parts[1]
-    }
+      country: parts[1],
+    };
   }
 
   // If we only have one part we'll end up here
@@ -106,65 +111,67 @@ export const getLocationFromText = (text: string): Location | null => {
     return {
       city,
       province,
-      country: parts[0]
-    }
-  } 
-  
+      country: parts[0],
+    };
+  }
+
   if (getIsCity(parts[0])) {
     return {
       city: parts[0],
       province,
-      country
-    }
+      country,
+    };
   }
 
   // Else, it must be a province/state. We just don't know and assume it is.
   return {
     city,
     province: parts[0],
-    country
-  }
-}
+    country,
+  };
+};
 
 export const getCleanText = (text: string | null) => {
-  const regexRemoveMultipleSpaces = / +/g
-  const regexRemoveLineBreaks = /(\r\n\t|\n|\r\t)/gm
+  const regexRemoveMultipleSpaces = / +/g;
+  const regexRemoveLineBreaks = /(\r\n\t|\n|\r\t)/gm;
 
-  if (!text) return null
+  if (!text) return null;
 
   const cleanText = text
-    .replace(regexRemoveLineBreaks, '')
-    .replace(regexRemoveMultipleSpaces, ' ')
-    .replace('...', '')
-    .replace('See more', '')
-    .replace('See less', '')
-    .trim()
+    .replace(regexRemoveLineBreaks, "")
+    .replace(regexRemoveMultipleSpaces, " ")
+    .replace("...", "")
+    .replace("See more", "")
+    .replace("See less", "")
+    .trim();
 
-  return cleanText
-}
+  return cleanText;
+};
 
-export const statusLog = (section: string, message: string, scraperSessionId?: string | number) => {
-  const sessionPart = (scraperSessionId) ? ` (${scraperSessionId})` : ''
-  const messagePart = (message) ? `: ${message}` : null
-  return console.log(`Scraper (${section})${sessionPart}${messagePart}`)
-}
+export const statusLog = (
+  section: string,
+  message: string,
+  scraperSessionId?: string | number
+) => {
+  const sessionPart = scraperSessionId ? ` (${scraperSessionId})` : "";
+  const messagePart = message ? `: ${message}` : null;
+  return console.log(`Scraper (${section})${sessionPart}${messagePart}`);
+};
 
-export const autoScroll = async (page: Page) => {
-  await page.evaluate(async () => {
-    await new Promise((resolve, reject) => {
-      var totalHeight = 0;
-      var distance = 500;
-      var timer = setInterval(() => {
-        var scrollHeight = document.body.scrollHeight;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
+export async function autoScroll(page: Page) {
+  await page.evaluate(() => {
+    let totalHeight = 0;
+    const distance = 500;
+    const timer = setInterval(() => {
+      const scrollHeight = document.body.scrollHeight;
+      window.scrollBy(0, distance);
+      totalHeight += distance;
 
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, 100);
-    });
+      if (totalHeight >= scrollHeight) {
+        clearInterval(timer);
+        Promise.resolve();
+      }
+    }, 100);
   });
 }
 
