@@ -1,30 +1,31 @@
-require('dotenv').config();
+require("dotenv").config();
 
-import express from 'express';
-import { LinkedInProfileScraper } from '../index';
+import express from "express";
+import { LinkedInProfileScraper } from "../index";
 
 const app = express();
 
 (async () => {
   // Setup environment variables to fill the sessionCookieValue
   const scraper = new LinkedInProfileScraper({
+    headless: false,
     sessionCookieValue: `${process.env.LINKEDIN_SESSION_COOKIE_VALUE}`,
     keepAlive: true,
-  })
+    timeout: 1000000,
+  });
 
   // Prepare the scraper
   // Loading it in memory
-  await scraper.setup()
+  await scraper.setup();
 
   // Usage: http://localhost:3000/?url=https://www.linkedin.com/in/jvandenaardweg/
-  app.get('/', async (req, res) => {
+  app.get("/", async (req, res) => {
     const urlToScrape = req.query.url as string;
 
-    const result = await scraper.run(urlToScrape)
+    const result = await scraper.run(urlToScrape);
 
-    return res.json(result)
-  })
+    return res.json(result);
+  });
 
-  app.listen(process.env.PORT || 3000)
-})()
-
+  app.listen(process.env.PORT || 3000);
+})();

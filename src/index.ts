@@ -235,58 +235,66 @@ export class LinkedInProfileScraper {
         }...`
       );
 
+      const defaultArgs = [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--proxy-server='direct://",
+        "--proxy-bypass-list=*",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--disable-features=site-per-process",
+        "--enable-features=NetworkService",
+        "--allow-running-insecure-content",
+        "--enable-automation",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--disable-web-security",
+        "--autoplay-policy=user-gesture-required",
+        "--disable-background-networking",
+        "--disable-breakpad",
+        "--disable-client-side-phishing-detection",
+        "--disable-component-update",
+        "--disable-default-apps",
+        "--disable-domain-reliability",
+        "--disable-extensions",
+        "--disable-features=AudioServiceOutOfProcess",
+        "--disable-hang-monitor",
+        "--disable-ipc-flooding-protection",
+        "--disable-notifications",
+        "--disable-offer-store-unmasked-wallet-cards",
+        "--disable-popup-blocking",
+        "--disable-print-preview",
+        "--disable-prompt-on-repost",
+        "--disable-speech-api",
+        "--disable-sync",
+        "--disk-cache-size=33554432",
+        "--hide-scrollbars",
+        "--ignore-gpu-blacklist",
+        "--metrics-recording-only",
+        "--mute-audio",
+        "--no-default-browser-check",
+        "--no-first-run",
+        "--no-pings",
+        "--no-zygote",
+        "--password-store=basic",
+        "--use-gl=swiftshader",
+        "--use-mock-keychain",
+      ];
+
+      const args = defaultArgs;
+
+      if (this.options.headless) {
+        args.push("--headless");
+        args.push("--single-process");
+      } else {
+        args.push("--start-maximized");
+      }
+
       this.browser = await puppeteer.launch({
         headless: this.options.headless,
-        args: [
-          ...(this.options.headless
-            ? "---single-process"
-            : "---start-maximized"),
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--proxy-server='direct://",
-          "--proxy-bypass-list=*",
-          "--disable-dev-shm-usage",
-          "--disable-accelerated-2d-canvas",
-          "--disable-gpu",
-          "--disable-features=site-per-process",
-          "--enable-features=NetworkService",
-          "--allow-running-insecure-content",
-          "--enable-automation",
-          "--disable-background-timer-throttling",
-          "--disable-backgrounding-occluded-windows",
-          "--disable-renderer-backgrounding",
-          "--disable-web-security",
-          "--autoplay-policy=user-gesture-required",
-          "--disable-background-networking",
-          "--disable-breakpad",
-          "--disable-client-side-phishing-detection",
-          "--disable-component-update",
-          "--disable-default-apps",
-          "--disable-domain-reliability",
-          "--disable-extensions",
-          "--disable-features=AudioServiceOutOfProcess",
-          "--disable-hang-monitor",
-          "--disable-ipc-flooding-protection",
-          "--disable-notifications",
-          "--disable-offer-store-unmasked-wallet-cards",
-          "--disable-popup-blocking",
-          "--disable-print-preview",
-          "--disable-prompt-on-repost",
-          "--disable-speech-api",
-          "--disable-sync",
-          "--disk-cache-size=33554432",
-          "--hide-scrollbars",
-          "--ignore-gpu-blacklist",
-          "--metrics-recording-only",
-          "--mute-audio",
-          "--no-default-browser-check",
-          "--no-first-run",
-          "--no-pings",
-          "--no-zygote",
-          "--password-store=basic",
-          "--use-gl=swiftshader",
-          "--use-mock-keychain",
-        ],
+        args,
         timeout: this.options.timeout,
       });
 
@@ -316,15 +324,15 @@ export class LinkedInProfileScraper {
     }
 
     // Important: Do not block "stylesheet", makes the crawler not work for LinkedIn
-    const blockedResources = [
+    const blockedResources: puppeteer.ResourceType[] = [
       "image",
       "media",
       "font",
       "texttrack",
-      "object",
-      "beacon",
-      "csp_report",
-      "imageset",
+      // "object",
+      // "beacon",
+      // "csp_report",
+      // "imageset",
     ];
 
     try {
@@ -332,8 +340,13 @@ export class LinkedInProfileScraper {
 
       // Use already open page
       // This makes sure we don't have an extra open tab consuming memory
-      const firstPage = (await this.browser.pages())[0];
-      await firstPage.close();
+      const allPages = await this.browser.pages();
+
+      for (const p of allPages) {
+        if (p !== page) {
+          await p.close();
+        }
+      }
 
       // Method to create a faster Page
       // From: https://github.com/shirshak55/scrapper-tools/blob/master/src/fastPage/index.ts#L113
@@ -529,7 +542,7 @@ export class LinkedInProfileScraper {
     // If we do not get redirected and stay on /login, we are logged out
     // If we get redirect to /feed, we are logged in
     await page.goto("https://www.linkedin.com/login", {
-      waitUntil: "networkidle2",
+      waitUntil: "domcontentloaded",
       timeout: this.options.timeout,
     });
 
@@ -582,7 +595,7 @@ export class LinkedInProfileScraper {
       await page.goto(profileUrl, {
         // Use "networkidl2" here and not "domcontentloaded".
         // As with "domcontentloaded" some elements might not be loaded correctly, resulting in missing data.
-        waitUntil: "networkidle2",
+        waitUntil: "domcontentloaded",
         timeout: this.options.timeout,
       });
 
