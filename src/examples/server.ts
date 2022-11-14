@@ -8,10 +8,9 @@ const app = express();
 (async () => {
   // Setup environment variables to fill the sessionCookieValue
   const scraper = new LinkedInProfileScraper({
-    headless: false,
+    headless: true,
     sessionCookieValue: `${process.env.LINKEDIN_SESSION_COOKIE_VALUE}`,
     keepAlive: true,
-    timeout: 1000000,
   });
 
   // Prepare the scraper
