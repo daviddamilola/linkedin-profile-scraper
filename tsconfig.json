@@ -13,7 +13,7 @@
     "noFallthroughCasesInSwitch": true,
     "declaration": true,
     "stripInternal": true,
-    "strictNullChecks": true,
+    "strictNullChecks": false,
     "downlevelIteration": true,
     "lib": ["es6", "DOM"],
     "moduleResolution": "node",
